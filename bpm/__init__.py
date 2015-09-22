@@ -6,7 +6,7 @@
 #   aubio, numpy
 #
 # TODO:
-#   See how dependancies are isntalled automatically or added to Picard if not part of it already
+#   See how dependancies are installed automatically or added to Picard if not part of it already
 
 PLUGIN_NAME = u"BPM Analyzer"
 PLUGIN_AUTHOR = u"Len Joubert"
@@ -22,7 +22,7 @@ from picard.track import Track
 from picard.file import File
 from picard.util import encode_filename, decode_filename, partial, thread
 from picard.ui.options import register_options_page, OptionsPage
-from picard.config import TextOption
+from picard.config import TextOption, IntOption
 from picard.ui.itemviews import (BaseAction, register_file_action,
                                  register_album_action)
 from picard.plugins.bpm.ui_options_bpm import Ui_BPMOptionsPage
@@ -30,19 +30,16 @@ from aubio import source, tempo
 from numpy import median, diff
 
 # the python to calculate bpm
-# todo: add the correct way to pass options from options page to it
 
 def get_file_bpm(self, path):
     """ Calculate the beats per minute (bpm) of a given file.
         path: path to the file
     """
 
-    samplerate = int(float(BMPOptionsPage.config.setting["bpm_samplerate_parameter"]))
-    win_s = int(float(BMPOptionsPage.config.setting["bpm_win_s_parameter"]))
-    hop_s = int(float(BMPOptionsPage.config.setting["bpm_hop_s_parameter"]))
-    
-    #    self.tagger.log.debug('%s' % (win_s))
-    
+    samplerate = int(float(BPMOptionsPage.config.setting["bpm_samplerate_parameter"]))
+    win_s = int(float(BPMOptionsPage.config.setting["bpm_win_s_parameter"]))
+    hop_s = int(float(BPMOptionsPage.config.setting["bpm_hop_s_parameter"]))
+       
     s = source(path, samplerate, hop_s)
     samplerate = s.samplerate
     o = tempo("specdiff", win_s, hop_s, samplerate)
@@ -65,8 +62,7 @@ def get_file_bpm(self, path):
 
     # Convert to periods and to bpm 
     bpms = 60./diff(beats)
-    b = median(bpms)
-    return b
+    return median(bpms)
 
 class FileBPM(BaseAction):
     NAME = N_("Calculate BPM...")
@@ -105,7 +101,7 @@ class FileBPM(BaseAction):
                 {'filename': file.filename}
             )
 
-class BMPOptionsPage(OptionsPage):
+class BPMOptionsPage(OptionsPage):
 
     NAME = "bpm"
     TITLE = "BPM"
@@ -118,19 +114,20 @@ class BMPOptionsPage(OptionsPage):
     ]
 
     def __init__(self, parent=None):
-        super(BMPOptionsPage, self).__init__(parent)
+        super(BPMOptionsPage, self).__init__(parent)
         self.ui = Ui_BPMOptionsPage()
         self.ui.setupUi(self)
 
     def load(self):
-        self.ui.win_s_parameter.setText(self.config.setting["bpm_win_s_parameter"])
-        self.ui.hop_s_parameter.setText(self.config.setting["bpm_hop_s_parameter"])
-        self.ui.samplerate_parameter.setText(self.config.setting["bpm_samplerate_parameter"])
+        cfg = self.config.setting
+        self.ui.win_s_parameter.setText(cfg["bpm_win_s_parameter"])
+        self.ui.hop_s_parameter.setText(cfg["bpm_hop_s_parameter"])
+        self.ui.samplerate_parameter.setText(cfg["bpm_samplerate_parameter"])
 
     def save(self):
         self.config.setting["bpm_win_s_parameter"] = unicode(self.ui.win_s_parameter.text())
         self.config.setting["bpm_hop_s_parameter"] = unicode(self.ui.hop_s_parameter.text())
         self.config.setting["bpm_samplerate_parameter"] = unicode(self.ui.samplerate_parameter.text())
-
+ 
 register_file_action(FileBPM())
-register_options_page(BMPOptionsPage)
+register_options_page(BPMOptionsPage)
