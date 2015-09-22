@@ -36,15 +36,18 @@ from numpy import median, diff
 def get_file_bpm(self, path):
     """ Calculate the beats per minute (bpm) of a given file.
         path: path to the file
+        buf_size    length of FFT
+        hop_size    number of frames between two consecutive runs
+        samplerate  sampling rate of the signal to analyze
     """
 
     samplerate = int(float(BPMOptionsPage.config.setting["bpm_samplerate_parameter"]))
-    win_s = int(float(BPMOptionsPage.config.setting["bpm_win_s_parameter"]))
+    buf_size = int(float(BPMOptionsPage.config.setting["bpm_win_s_parameter"]))
     hop_size = int(float(BPMOptionsPage.config.setting["bpm_hop_s_parameter"]))
 
     mediasource = source(path, samplerate, hop_size)
     samplerate = mediasource.samplerate
-    beattracking = tempo("specdiff", win_s, hop_size, samplerate)
+    beattracking = tempo("specdiff", buf_size, hop_size, samplerate)
     # List of beats, in samples
     beats = []
     # Total number of frames read
