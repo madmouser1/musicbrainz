@@ -2,11 +2,12 @@
 
 # Changelog:
 #   [2015-09-15] Initial version
-# Dependancies: 
+# Dependancies:
 #   aubio, numpy
 #
 # TODO:
-#   See how dependancies are installed automatically or added to Picard if not part of it already
+# See how dependancies are installed automatically or added to Picard if
+# not part of it already
 
 PLUGIN_NAME = u"BPM Analyzer"
 PLUGIN_AUTHOR = u"Len Joubert"
@@ -31,6 +32,7 @@ from numpy import median, diff
 
 # the python to calculate bpm
 
+
 def get_file_bpm(self, path):
     """ Calculate the beats per minute (bpm) of a given file.
         path: path to the file
@@ -38,31 +40,32 @@ def get_file_bpm(self, path):
 
     samplerate = int(float(BPMOptionsPage.config.setting["bpm_samplerate_parameter"]))
     win_s = int(float(BPMOptionsPage.config.setting["bpm_win_s_parameter"]))
-    hop_s = int(float(BPMOptionsPage.config.setting["bpm_hop_s_parameter"]))
-       
-    s = source(path, samplerate, hop_s)
-    samplerate = s.samplerate
-    o = tempo("specdiff", win_s, hop_s, samplerate)
+    hop_size = int(float(BPMOptionsPage.config.setting["bpm_hop_s_parameter"]))
+
+    mediasource = source(path, samplerate, hop_size)
+    samplerate = mediasource.samplerate
+    beattracking = tempo("specdiff", win_s, hop_size, samplerate)
     # List of beats, in samples
     beats = []
     # Total number of frames read
     total_frames = 0
 
     while True:
-        samples, read = s()
-        is_beat = o(samples)
+        samples, read = mediasource()
+        is_beat = beattracking(samples)
         if is_beat:
-            this_beat = o.get_last_s()
+            this_beat = beattracking.get_last_s()
             beats.append(this_beat)
-            #if o.get_confidence() > .2 and len(beats) > 2.:
+            # if o.get_confidence() > .2 and len(beats) > 2.:
             #    break
         total_frames += read
-        if read < hop_s:
+        if read < hop_size:
             break
 
-    # Convert to periods and to bpm 
-    bpms = 60./diff(beats)
+    # Convert to periods and to bpm
+    bpms = 60. / diff(beats)
     return median(bpms)
+
 
 class FileBPM(BaseAction):
     NAME = N_("Calculate BPM...")
@@ -101,6 +104,7 @@ class FileBPM(BaseAction):
                 {'filename': file.filename}
             )
 
+
 class BPMOptionsPage(OptionsPage):
 
     NAME = "bpm"
@@ -125,9 +129,12 @@ class BPMOptionsPage(OptionsPage):
         self.ui.samplerate_parameter.setText(cfg["bpm_samplerate_parameter"])
 
     def save(self):
-        self.config.setting["bpm_win_s_parameter"] = unicode(self.ui.win_s_parameter.text())
-        self.config.setting["bpm_hop_s_parameter"] = unicode(self.ui.hop_s_parameter.text())
-        self.config.setting["bpm_samplerate_parameter"] = unicode(self.ui.samplerate_parameter.text())
- 
+        self.config.setting["bpm_win_s_parameter"] = unicode(
+            self.ui.win_s_parameter.text())
+        self.config.setting["bpm_hop_s_parameter"] = unicode(
+            self.ui.hop_s_parameter.text())
+        self.config.setting["bpm_samplerate_parameter"] = unicode(
+            self.ui.samplerate_parameter.text())
+
 register_file_action(FileBPM())
 register_options_page(BPMOptionsPage)
