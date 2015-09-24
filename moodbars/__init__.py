@@ -20,19 +20,19 @@ from picard.ui.options import register_options_page, OptionsPage
 from picard.config import TextOption
 from picard.ui.itemviews import (BaseAction, register_file_action,
                                  register_album_action)
-from picard.plugins.replaygain.ui_options_replaygain import Ui_ReplayGainOptionsPage
+from picard.plugins.moodbars.ui_options_moodbar import Ui_MoodbarOptionsPage
 
 # Path to various moodbar tools. There must be a tool for every supported
 # audio file format.
 MOODBAR_COMMANDS = {
-    "Ogg Vorbis": ("replaygain_vorbisgain_command", "replaygain_vorbisgain_options"),
-    "MPEG-1 Audio": ("replaygain_mp3gain_command", "replaygain_mp3gain_options"),
-    "FLAC": ("replaygain_metaflac_command", "replaygain_metaflac_options"),
-    "WavPack": ("replaygain_wvgain_command", "replaygain_wvgain_options"),
+    "Ogg Vorbis": ("moodbar_vorbis_command", "moodbar_vorbis_options"),
+    "MPEG-1 Audio": ("moodbar_mp3_command", "moodbar_mp3_options"),
+    "FLAC": ("moodbar_flac_command", "moodbar_flac_options"),
+    "WavPack": ("moodbar_wav_command", "moodbar_wav_options"),
 }
 
 
-def calculate_replay_gain_for_files(files, format, tagger):
+def generate_moodbar_for_files(files, format, tagger):
     """Generate the moodfiles for a list of files in album mode."""
     file_list = ['%s' % encode_filename(f.filename) for f in files]
     for mood_file in file_list:
@@ -53,13 +53,13 @@ def calculate_replay_gain_for_files(files, format, tagger):
         raise Exception('Moodbar: Unsupported format %s' % (format))
 
 
-class ReplayGain(BaseAction):
+class MoodBar(BaseAction):
     NAME = N_("Generate Moodbar &file...")
 
     def _add_file_to_queue(self, file):
         thread.run_task(
-            partial(self._calculate_replaygain, file),
-            partial(self._replaygain_callback, file))
+            partial(self._generate_moodbar, file),
+            partial(self._moodbar_callback, file))
 
     def callback(self, objs):
         for obj in objs:
@@ -69,67 +69,67 @@ class ReplayGain(BaseAction):
             elif isinstance(obj, File):
                 self._add_file_to_queue(obj)
 
-    def _calculate_replaygain(self, file):
+    def _generate_moodbar(self, file):
         self.tagger.window.set_statusbar_message(
             N_('Calculating moodbar for "%(filename)s"...'),
             {'filename': file.filename}
         )
-        calculate_replay_gain_for_files([file], file.NAME, self.tagger)
+        generate_moodbar_for_files([file], file.NAME, self.tagger)
 
-    def _replaygain_callback(self, file, result=None, error=None):
+    def _moodbar_callback(self, file, result=None, error=None):
         if not error:
             self.tagger.window.set_statusbar_message(
-                N_('Moodbar for "%(filename)s" successfully calculated.'),
+                N_('Moodbar for "%(filename)s" successfully generated.'),
                 {'filename': file.filename}
             )
         else:
             self.tagger.window.set_statusbar_message(
-                N_('Could not calculate moodbar for "%(filename)s".'),
+                N_('Could not generate moodbar for "%(filename)s".'),
                 {'filename': file.filename}
             )
 
 
-class ReplayGainOptionsPage(OptionsPage):
+class MoodbarOptionsPage(OptionsPage):
 
     NAME = "Moodbars"
     TITLE = "Moodbars"
     PARENT = "plugins"
 
     options = [
-        TextOption("setting", "replaygain_vorbisgain_command", "moodbar"),
-        TextOption("setting", "replaygain_vorbisgain_options", "-o"),
-        TextOption("setting", "replaygain_mp3gain_command", "moodbar"),
-        TextOption("setting", "replaygain_mp3gain_options", "-o"),
-        TextOption("setting", "replaygain_metaflac_command", "moodbar"),
-        TextOption("setting", "replaygain_metaflac_options", "-o"),
-        TextOption("setting", "replaygain_wvgain_command", "moodbar"),
-        TextOption("setting", "replaygain_wvgain_options", "-o")
+        TextOption("setting", "moodbar_vorbis_command", "moodbar"),
+        TextOption("setting", "moodbar_vorbis_options", "-o"),
+        TextOption("setting", "moodbar_mp3_command", "moodbar"),
+        TextOption("setting", "moodbar_mp3_options", "-o"),
+        TextOption("setting", "moodbar_flac_command", "moodbar"),
+        TextOption("setting", "moodbar_flac_options", "-o"),
+        TextOption("setting", "moodbar_wav_command", "moodbar"),
+        TextOption("setting", "moodbar_wav_options", "-o")
     ]
 
     def __init__(self, parent=None):
-        super(ReplayGainOptionsPage, self).__init__(parent)
-        self.ui = Ui_ReplayGainOptionsPage()
+        super(MoodbarOptionsPage, self).__init__(parent)
+        self.ui = Ui_MoodbarOptionsPage()
         self.ui.setupUi(self)
 
     def load(self):
-        self.ui.vorbisgain_command.setText(
-            self.config.setting["replaygain_vorbisgain_command"])
-        self.ui.mp3gain_command.setText(
-            self.config.setting["replaygain_mp3gain_command"])
-        self.ui.metaflac_command.setText(
-            self.config.setting["replaygain_metaflac_command"])
-        self.ui.wvgain_command.setText(
-            self.config.setting["replaygain_wvgain_command"])
+        self.ui.vorbis_command.setText(
+            self.config.setting["moodbar_vorbis_command"])
+        self.ui.mp3_command.setText(
+            self.config.setting["moodbar_mp3_command"])
+        self.ui.flac_command.setText(
+            self.config.setting["moodbar_flac_command"])
+        self.ui.wav_command.setText(
+            self.config.setting["moodbar_wav_command"])
 
     def save(self):
-        self.config.setting["replaygain_vorbisgain_command"] = unicode(
-            self.ui.vorbisgain_command.text())
-        self.config.setting["replaygain_mp3gain_command"] = unicode(
-            self.ui.mp3gain_command.text())
-        self.config.setting["replaygain_metaflac_command"] = unicode(
-            self.ui.metaflac_command.text())
-        self.config.setting["replaygain_wvgain_command"] = unicode(
-            self.ui.wvgain_command.text())
+        self.config.setting["moodbar_vorbis_command"] = unicode(
+            self.ui.vorbis_command.text())
+        self.config.setting["moodbar_mp3_command"] = unicode(
+            self.ui.mp3_command.text())
+        self.config.setting["moodbar_flac_command"] = unicode(
+            self.ui.flac_command.text())
+        self.config.setting["moodbar_wav_command"] = unicode(
+            self.ui.wav_command.text())
 
-register_file_action(ReplayGain())
-register_options_page(ReplayGainOptionsPage)
+register_file_action(MoodBar())
+register_options_page(MoodbarOptionsPage)
