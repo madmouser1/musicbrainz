@@ -22,9 +22,9 @@ from picard.ui.itemviews import (BaseAction, register_file_action,
                                  register_album_action)
 from picard.plugins.replaygain.ui_options_replaygain import Ui_ReplayGainOptionsPage
 
-# Path to various replay gain tools. There must be a tool for every supported
+# Path to various moodbar tools. There must be a tool for every supported
 # audio file format.
-REPLAYGAIN_COMMANDS = {
+MOODBAR_COMMANDS = {
     "Ogg Vorbis": ("replaygain_vorbisgain_command", "replaygain_vorbisgain_options"),
     "MPEG-1 Audio": ("replaygain_mp3gain_command", "replaygain_mp3gain_options"),
     "FLAC": ("replaygain_metaflac_command", "replaygain_metaflac_options"),
@@ -35,21 +35,16 @@ REPLAYGAIN_COMMANDS = {
 def calculate_replay_gain_for_files(files, format, tagger):
     """Generate the moodfiles for a list of files in album mode."""
     file_list = ['%s' % encode_filename(f.filename) for f in files]
-    # for mood_file in file_list:
-    #     (prefix, sep, suffix) = mood_file.rpartition('.')
-    #     new_filename = prefix + '.mood'
-    #     file_list_mood = ['%s' % new_filename]
-    """ Try something different, copy one list to other and try os.path.splitext method"""
     for mood_file in file_list:
         new_filename = os.path.join(os.path.dirname(
             mood_file), '.' + os.path.splitext(os.path.basename(mood_file))[0] + '.mood')
         file_list_mood = ['%s' % new_filename]
 
-    if format in REPLAYGAIN_COMMANDS \
-            and tagger.config.setting[REPLAYGAIN_COMMANDS[format][0]]:
-        command = tagger.config.setting[REPLAYGAIN_COMMANDS[format][0]]
+    if format in MOODBAR_COMMANDS \
+            and tagger.config.setting[MOODBAR_COMMANDS[format][0]]:
+        command = tagger.config.setting[MOODBAR_COMMANDS[format][0]]
         options = tagger.config.setting[
-            REPLAYGAIN_COMMANDS[format][1]].split(' ')
+            MOODBAR_COMMANDS[format][1]].split(' ')
 #        tagger.log.debug('My debug >>>  %s' % (file_list_mood))
         tagger.log.debug(
             '%s %s %s %s' % (command, decode_filename(' '.join(file_list)), ' '.join(options), decode_filename(' '.join(file_list_mood))))
@@ -59,7 +54,7 @@ def calculate_replay_gain_for_files(files, format, tagger):
 
 
 class ReplayGain(BaseAction):
-    NAME = N_("Calculate Moodbar for &file...")
+    NAME = N_("Generate Moodbar &file...")
 
     def _add_file_to_queue(self, file):
         thread.run_task(
@@ -91,68 +86,6 @@ class ReplayGain(BaseAction):
             self.tagger.window.set_statusbar_message(
                 N_('Could not calculate moodbar for "%(filename)s".'),
                 {'filename': file.filename}
-            )
-
-
-class AlbumGain(BaseAction):
-    NAME = N_("Calculate Moodbars for &album...")
-
-    def callback(self, objs):
-        albums = filter(lambda o: isinstance(o, Album) and not isinstance(o,
-                                                                          NatAlbum), objs)
-        nats = filter(lambda o: isinstance(o, NatAlbum), objs)
-
-        for album in albums:
-            thread.run_task(
-                partial(self._calculate_albumgain, album),
-                partial(self._albumgain_callback, album))
-
-        for natalbum in nats:
-            thread.run_task(
-                partial(self._calculate_natgain, natalbum),
-                partial(self._albumgain_callback, natalbum))
-
-    def split_files_by_type(self, files):
-        """Split the given files by filetype into separate lists."""
-        files_by_format = defaultdict(list)
-
-        for file in files:
-            files_by_format[file.NAME].append(file)
-
-        return files_by_format
-
-    def _calculate_albumgain(self, album):
-        self.tagger.window.set_statusbar_message(
-            N_('Calculating moodbars for "%(album)s"...'),
-            {'album': album.metadata["album"]}
-        )
-        filelist = [t.linked_files[0] for t in album.tracks if t.is_linked()]
-
-        for format, files in self.split_files_by_type(filelist).iteritems():
-            calculate_replay_gain_for_files(files, format, self.tagger)
-
-    def _calculate_natgain(self, natalbum):
-        """Calculates the replaygain"""
-        self.tagger.window.set_statusbar_message(
-            N_('Calculating moodbars for "%(album)s"...'),
-            {'album': natalbum.metadata["album"]}
-        )
-        filelist = [t.linked_files[0]
-                    for t in natalbum.tracks if t.is_linked()]
-
-        for file_ in filelist:
-            calculate_replay_gain_for_files([file_], file_.NAME, self.tagger)
-
-    def _albumgain_callback(self, album, result=None, error=None):
-        if not error:
-            self.tagger.window.set_statusbar_message(
-                N_('Moodbars for "%(album)s" successfully calculated.'),
-                {'album': album.metadata["album"]}
-            )
-        else:
-            self.tagger.window.set_statusbar_message(
-                N_('Could not calculate moodbars for "%(album)s".'),
-                {'album': album.metadata["album"]}
             )
 
 
@@ -199,5 +132,4 @@ class ReplayGainOptionsPage(OptionsPage):
             self.ui.wvgain_command.text())
 
 register_file_action(ReplayGain())
-register_album_action(AlbumGain())
 register_options_page(ReplayGainOptionsPage)
