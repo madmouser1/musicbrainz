@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>ReplayGainOptionsPage</class>
- <widget class="QWidget" name="ReplayGainOptionsPage">
+ <class>MoodbarOptionsPage</class>
+ <widget class="QWidget" name="MoodbarOptionsPage">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -18,9 +18,9 @@
     <number>9</number>
    </property>
    <item>
-    <widget class="QGroupBox" name="replay_gain">
+    <widget class="QGroupBox" name="moodbar_group">
      <property name="title">
-      <string>Replay Gain</string>
+      <string>Moodbar</string>
      </property>
      <layout class="QVBoxLayout">
       <property name="spacing">
@@ -32,42 +32,42 @@
       <item>
        <widget class="QLabel" name="label">
         <property name="text">
-         <string>Path to VorbisGain:</string>
+         <string>Path to Ogg Vorbis moodbar tool:</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QLineEdit" name="vorbisgain_command"/>
+       <widget class="QLineEdit" name="vorbis_command"/>
       </item>
       <item>
        <widget class="QLabel" name="label_2">
         <property name="text">
-         <string>Path to MP3Gain:</string>
+         <string>Path to MP3 moodbar tool:</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QLineEdit" name="mp3gain_command"/>
+       <widget class="QLineEdit" name="mp3_command"/>
       </item>
       <item>
        <widget class="QLabel" name="label_3">
         <property name="text">
-         <string>Path to metaflac:</string>
+         <string>Path to FLAC moodbar tool:</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QLineEdit" name="metaflac_command"/>
+       <widget class="QLineEdit" name="flac_command"/>
       </item>
       <item>
        <widget class="QLabel" name="label_4">
         <property name="text">
-         <string>Path to wvgain:</string>
+         <string>Path to WAV moodbar tool:</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QLineEdit" name="wvgain_command"/>
+       <widget class="QLineEdit" name="wav_command"/>
       </item>
      </layout>
     </widget>
